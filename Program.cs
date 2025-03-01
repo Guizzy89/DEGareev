@@ -1,23 +1,23 @@
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
+using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
-
-Order order1 = new (" ", " ", " ", " " );
+OrdersRepository repository = new OrdersRepository();
+repository.Add(new Order (" ", " ", " ", " " ));
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.MapGet("/", () => "Hello World!");
-app.MapGet("orders", () => order1);
+app.MapGet("orders", () => repository.ReadAll());
 
 app.Run();
 
 public class OrdersRepository : DbContext
 {
-    private DbSet<Order> orders;
+    private DbSet<Order> Orders { get; set; }
     //private DbSet<Order> Orders { get; set; }
     public OrdersRepository ()
     {
-        orders = Set<Order>();
+        Orders = Set<Order>();
         Database.EnsureCreated();
     }
     #region CRUD
@@ -26,26 +26,26 @@ public class OrdersRepository : DbContext
         optionsBuilder.UseSqlite("Data source = orders.db");
     }
 
-    public void Add (object order)
+    public new void Add (object order)
     {
         if (order is not Order)
             throw new Exception("Wrong data type");
-        orders.Add((Order)order);
+        Orders.Add((Order)order);
     }
 
     public List<Order> ReadAll()
     {
-        return orders.ToList();
+        return Orders.ToList();
     }
 
     public Order ReadNumber(int orderNumber)
     {
-        return orders.ToList().Find(order => order.OrderNumber == orderNumber);
+        return Orders.ToList().Find(order => order.OrderNumber == orderNumber);
     }
 
     public void Delete(int orderNumber)
     {
-        orders.Remove(ReadNumber(orderNumber));
+        Orders.Remove(ReadNumber(orderNumber));
     }
     #endregion
 }
@@ -53,8 +53,9 @@ public class OrdersRepository : DbContext
 
 public class Order
 {
-    private static int _nextOrderNumber = 1;
+    [Key]
     public int OrderNumber { get; set; }
+    private static int _nextOrderNumber = 1;
     public DateOnly Orderdate { get; set; } = DateOnly.FromDateTime(DateTime.Now);
     public DateOnly? ReadyToIssueDate { get; set; }
     public string Device { get; set; }
