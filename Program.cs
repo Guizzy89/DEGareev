@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
@@ -13,6 +15,7 @@ public class Order
     private static int _nextOrderNumber = 1;
     public int OrderNumber { get; set; }
     public DateOnly Orderdate { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    public DateOnly? ReadyToIssueDate { get; set; }
     public string Device { get; set; }
     public string ProblemType { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.WaitingForExecution;
@@ -38,6 +41,14 @@ public class Order
         this.ProblemType = problemType;
         this.ClientName = clientName;
         this.ClientSurname = clientSurname;
+    }
+
+    public int EndRepair()
+    {
+        this.Status = OrderStatus.ReadyToIssue;
+        DateOnly ReadyToIssueDate = DateOnly.FromDateTime(DateTime.Now);
+        int DaysOfRepair = ReadyToIssueDate.DayNumber - Orderdate.DayNumber;
+        return DaysOfRepair;
     }
 }
 
