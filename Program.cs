@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,46 @@ app.MapGet("/", () => "Hello World!");
 app.MapGet("orders", () => order1);
 
 app.Run();
+
+public class OrdersRepository : DbContext
+{
+    private DbSet<Order> orders;
+    //private DbSet<Order> Orders { get; set; }
+    public OrdersRepository ()
+    {
+        orders = Set<Order>();
+        Database.EnsureCreated();
+    }
+    #region CRUD
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlite("Data source = orders.db");
+    }
+
+    public void Add (object order)
+    {
+        if (order is not Order)
+            throw new Exception("Wrong data type");
+        orders.Add((Order)order);
+    }
+
+    public List<Order> ReadAll()
+    {
+        return orders.ToList();
+    }
+
+    public Order ReadNumber(int orderNumber)
+    {
+        return orders.ToList().Find(order => order.OrderNumber == orderNumber);
+    }
+
+    public void Delete(int orderNumber)
+    {
+        orders.Remove(ReadNumber(orderNumber));
+    }
+    #endregion
+}
+
 
 public class Order
 {
