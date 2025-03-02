@@ -14,7 +14,6 @@ app.Run();
 public class OrdersRepository : DbContext
 {
     private DbSet<Order> Orders { get; set; }
-    //private DbSet<Order> Orders { get; set; }
     public OrdersRepository ()
     {
         Orders = Set<Order>();
