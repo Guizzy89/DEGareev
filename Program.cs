@@ -39,7 +39,10 @@ public class OrdersRepository : DbContext
 
     public Order ReadNumber(int orderNumber)
     {
-        return Orders.ToList().Find(order => order.OrderNumber == orderNumber);
+        var order = Orders.ToList().Find(order => order.OrderNumber == orderNumber);
+        if (order == null) throw new ArgumentException($"Order with number {orderNumber} not found.");      
+
+        return order;
     }
 
     public void Delete(int orderNumber)
