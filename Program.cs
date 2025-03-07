@@ -10,7 +10,7 @@ repository.Add(new Order (" ", " ", " ", " " ));
 repository.Add(new Order(" 1", " 1", " 1", " 1"));
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.MapGet("/", () => "Hello World!");
-app.MapGet("orders", () => repository.ReadAll());
+app.MapGet("orders", async () => await repository.ReadAll());
 app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
 {
     try
@@ -32,7 +32,7 @@ app.MapPost("/orders", async ([FromBody] Order order) =>
 
 app.MapDelete("/orders/{orderNumber:int}", async (int orderNumber) =>
 {
-    repository.Delete(orderNumber);
+    await repository.Delete(orderNumber);
     return Results.NoContent();
 });
 
@@ -66,23 +66,24 @@ public class OrdersRepository : DbContext
         }
     }
 
-    public List<Order> ReadAll()
+    public async Task<List<Order>> ReadAll()
     {
-        return Orders.ToList();
+        return await Orders.ToListAsync();
     }
 
-    public Order ReadNumber(int orderNumber)
+    public async Task<Order> ReadNumber(int orderNumber)
     {
-        var order = Orders.ToList().Find(order => order.OrderNumber == orderNumber);
+        var order = await Orders.FirstOrDefaultAsync(order => order.OrderNumber == orderNumber);
         if (order == null) throw new ArgumentException($"Order with number {orderNumber} not found.");      
 
         return order;
     }
 
-    public void Delete(int orderNumber)
+    public async Task Delete(int orderNumber)
     {
-        Orders.Remove(ReadNumber(orderNumber));
-        SaveChanges();
+        var order = await ReadNumber(orderNumber);
+        Orders.Remove(order);
+        await SaveChangesAsync();
     }
     #endregion
 }
