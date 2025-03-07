@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -20,6 +21,18 @@ app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
     {
         return Results.NotFound(ex.Message);
     }
+});
+
+app.MapPost("/orders", async ([FromBody] Order order) =>
+{
+    repository.Add(order);
+    return Results.Created($"/orders/{order.OrderNumber}", order);
+});
+
+app.MapDelete("/orders/{orderNumber:int}", async (int orderNumber) =>
+{
+    repository.Delete(orderNumber);
+    return Results.NoContent();
 });
 
 app.Run();
