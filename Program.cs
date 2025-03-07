@@ -56,6 +56,7 @@ public class OrdersRepository : DbContext
         if (order is not Order)
             throw new Exception("Wrong data type");
         Orders.Add((Order)order);
+        SaveChanges();
     }
 
     public List<Order> ReadAll()
@@ -74,6 +75,7 @@ public class OrdersRepository : DbContext
     public void Delete(int orderNumber)
     {
         Orders.Remove(ReadNumber(orderNumber));
+        SaveChanges();
     }
     #endregion
 }
