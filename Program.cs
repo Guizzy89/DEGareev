@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -25,7 +26,7 @@ app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
 
 app.MapPost("/orders", async ([FromBody] Order order) =>
 {
-    repository.Add(order);
+    await repository.Add(order);
     return Results.Created($"/orders/{order.OrderNumber}", order);
 });
 
@@ -51,12 +52,18 @@ public class OrdersRepository : DbContext
         optionsBuilder.UseSqlite("Data source = orders.db");
     }
     #region CRUD
-    public new void Add (object order)
+    public async Task Add(Order order)
     {
-        if (order is not Order)
-            throw new Exception("Wrong data type");
-        Orders.Add((Order)order);
-        SaveChanges();
+        try
+        {
+            Orders.Add(order);
+            await SaveChangesAsync(); 
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine($"Ошибка при добавлении заказа: {ex.Message}");
+            throw;
+        }
     }
 
     public List<Order> ReadAll()
@@ -84,6 +91,7 @@ public class OrdersRepository : DbContext
 public class Order
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int OrderNumber { get; set; }
     private static int _nextOrderNumber = 1;
     public DateOnly Orderdate { get; set; } = DateOnly.FromDateTime(DateTime.Now);
