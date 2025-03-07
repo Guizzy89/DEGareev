@@ -5,9 +5,22 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 OrdersRepository repository = new OrdersRepository();
 repository.Add(new Order (" ", " ", " ", " " ));
+repository.Add(new Order(" 1", " 1", " 1", " 1"));
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.MapGet("/", () => "Hello World!");
 app.MapGet("orders", () => repository.ReadAll());
+app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
+{
+    try
+    {
+        var order = await Task.FromResult(repository.ReadNumber(orderNumber));
+        return Results.Ok(order);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.NotFound(ex.Message);
+    }
+});
 
 app.Run();
 
@@ -19,12 +32,12 @@ public class OrdersRepository : DbContext
         Orders = Set<Order>();
         Database.EnsureCreated();
     }
-    #region CRUD
+    
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseSqlite("Data source = orders.db");
     }
-
+    #region CRUD
     public new void Add (object order)
     {
         if (order is not Order)
