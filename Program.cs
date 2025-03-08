@@ -4,10 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors();
 var app = builder.Build();
 OrdersRepository repository = new OrdersRepository();
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.MapGet("/", () => "Hello World!");
+app.UseCors(option =>
+option.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.MapGet("orders", async () => await repository.ReadAll());
 app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
 {
@@ -22,7 +26,7 @@ app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
     }
 });
 
-app.MapPost("/orders", async ([FromBody] Order order) =>
+app.MapPost("/orders/add", async ([FromBody] Order order) =>
 {
     await repository.Add(order);
     return Results.Created($"/orders/{order.OrderNumber}", order);
@@ -94,13 +98,11 @@ public class OrdersRepository : DbContext
     #endregion
 }
 
-
 public class Order
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int OrderNumber { get; set; }
-    private static int _nextOrderNumber = 1;
     public DateOnly Orderdate { get; set; } = DateOnly.FromDateTime(DateTime.Now);
     public DateOnly? ReadyToIssueDate { get; set; }
     public string Device { get; set; }
@@ -123,7 +125,6 @@ public class Order
 
     public Order(string device, string problemType, string clientName, string clientSurname)
     {
-        this.OrderNumber = _nextOrderNumber++;
         this.Device = device;
         this.ProblemType = problemType;
         this.ClientName = clientName;
