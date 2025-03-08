@@ -6,8 +6,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 OrdersRepository repository = new OrdersRepository();
-repository.Add(new Order (" ", " ", " ", " " ));
-repository.Add(new Order(" 1", " 1", " 1", " 1"));
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.MapGet("/", () => "Hello World!");
 app.MapGet("orders", async () => await repository.ReadAll());
@@ -34,6 +32,14 @@ app.MapDelete("/orders/{orderNumber:int}", async (int orderNumber) =>
 {
     await repository.Delete(orderNumber);
     return Results.NoContent();
+});
+
+app.MapPut("/orders/{orderNumber}/description", async (int orderNumber, [FromBody] string description) =>
+{
+    var order = await repository.ReadNumber(orderNumber);
+    order.Description = description;
+    await repository.SaveChangesAsync();
+    return Results.Ok(order);
 });
 
 app.Run();
