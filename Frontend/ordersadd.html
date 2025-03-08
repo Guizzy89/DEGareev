@@ -71,6 +71,34 @@
     input {
         display: flex;
         justify-content: center;
+        color: black;
+        /* Черный текст по умолчанию */
+        border: 1px solid #2b7a77;
+        /* Рамка синего цвета */
+        border-radius: 5px;
+        /* Скругленные углы */
+        padding: 10px;
+        /* Внутренние отступы */
+        outline: none;
+        /* Убираем стандартный контур при фокусе */
+        transition: all 0.3s ease;
+        /* Плавные переходы */
+    }
+
+    /* Стиль при наведении курсора */
+    input:hover {
+        background-color: #def2f1;
+        /* Фон становится синим при наведении */
+        color: black;
+        /* Текст становится белым */
+    }
+
+    /* Стиль при активном вводе текста (в фокусе) */
+    input:focus {
+        background-color: #def2f1;
+        /* Фон становится синим при фокусе */
+        color: black;
+        /* Текст становится белым */
     }
 
     button {
