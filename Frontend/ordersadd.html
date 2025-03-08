@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <style>
-        .OrdersAddForm {
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
 </head>
+
 <body>
     <div class="OrdersAdd">
         <input id="clientName" placeholder="Client Name" />
@@ -52,4 +48,54 @@
         }
     </script>
 </body>
+<style>
+    * {
+        padding: 10px;
+        margin: 10px;
+    }
+
+    body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        background-color: #3aafa9;
+    }
+
+    .OrdersAddForm {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 200px;
+    }
+
+    input {
+        display: flex;
+        justify-content: center;
+    }
+
+    button {
+        background-color: #17242a;
+        /* Цвет фона */
+        color: white;
+        /* Белый текст */
+        border: none;
+        /* Убираем рамку */
+        width: 185px;
+        border-radius: 5px;
+        /* Скругляем углы */
+        padding: 10px 20px;
+        /* Внутренний отступ */
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+        /* Плавная анимация при наведении */
+    }
+
+    button:hover {
+        background-color: #2b7a77;
+        /* цвет при наведении */
+        cursor: pointer;
+    }
+</style>
+
 </html>
