@@ -19,7 +19,7 @@ var app = builder.Build();
 OrdersRepository repository = new OrdersRepository();
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.UseStaticFiles();
-app.MapGet("/", () => Results.Redirect("Frontend/index.html"));
+app.MapGet("/", () => Results.Redirect("index.html"));
 app.UseCors(option =>
 option.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.MapGet("orders", async () => await repository.ReadAll());

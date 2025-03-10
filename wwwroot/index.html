@@ -4,52 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add new Order</title>
+    <title>Welcome!</title>
 </head>
 
 <body>
-    <div class="OrdersAdd">
-        <input id="clientName" placeholder="Client Name" />
-        <input id="clientSurname" placeholder="Client Surname" />
-        <input id="device" placeholder="Device" />
-        <input id="problemType" placeholder="Problem Type" />
-        <input id="clientEmail" placeholder="СlientEmail" />
-        <button onclick="OrdersAdd()">Добавить заказ</button>
+    <div>
+        <a href="/orders/add"><button>Новый заказ</button></a>
     </div>
-
-    <script>
-        async function OrdersAdd() {
-            let clientName = document.getElementById("clientName").value;
-            let clientSurname = document.getElementById("clientSurname").value;
-            let device = document.getElementById("device").value;
-            let problemType = document.getElementById("problemType").value;
-            let clientEmail = document.getElementById("clientEmail").value;
-
-            try {
-                const response = await fetch("http://localhost:5144/orders/add", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        clientName: clientName,
-                        clientSurname: clientSurname,
-                        device: device,
-                        problemType: problemType,
-                        clientEmail: clientEmail
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Ошибка отправки данных: ${response.status}`);
-                }
-
-                console.log('Данные успешно отправлены');
-            } catch (error) {
-                console.error('Произошла ошибка:', error);
-            }
-        }
-    </script>
 </body>
 <style>
     * {
