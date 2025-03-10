@@ -2,14 +2,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Extensions.Configuration;
+using MailKit.Net.Smtp;
+using MimeKit;
+using MailKit;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.AddTransient<IMailService, MailService>();
 var app = builder.Build();
 OrdersRepository repository = new OrdersRepository();
 List<string> executors = ["Ivan", "Petr", "Sergey"];
-app.MapGet("/", () => "Hello World!");
+app.UseStaticFiles();
+app.MapGet("/", () => Results.Redirect("Frontend/index.html"));
 app.UseCors(option =>
 option.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.MapGet("orders", async () => await repository.ReadAll());
@@ -46,7 +56,53 @@ app.MapPut("/orders/{orderNumber}/description", async (int orderNumber, [FromBod
     return Results.Ok(order);
 });
 
+app.MapPut("/orders/{orderNumber}/readytoissue", async (int orderNumber, IMailService mailService) =>
+{
+    var order = await repository.ReadNumber(orderNumber);
+    order.EndRepair(mailService);
+    await repository.SaveChangesAsync();
+    return Results.Ok(order);
+});
+
 app.Run();
+
+public class MailSettings
+{
+    public string Host { get; set; }
+    public int Port { get; set; }
+    public string Username { get; set; }
+    public string Password { get; set; }
+}
+
+public interface IMailService
+{
+    Task SendEmailAsync(string to, string subject, string message);
+}
+
+public class MailService : IMailService
+{
+    private readonly MailSettings _mailSettings;
+
+    public MailService(IOptions<MailSettings> mailSettings)
+    {
+        _mailSettings = mailSettings.Value;
+    }
+
+    public async Task SendEmailAsync(string to, string subject, string message)
+    {
+        var emailMessage = new MimeMessage();
+        emailMessage.From.Add(MailboxAddress.Parse(_mailSettings.Username)); // Используем Parse
+        emailMessage.To.Add(MailboxAddress.Parse(to)); // Используем Parse
+        emailMessage.Subject = subject;
+        emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain) { Text = message };
+
+        using var client = new SmtpClient();
+        await client.ConnectAsync(_mailSettings.Host, _mailSettings.Port, true);
+        await client.AuthenticateAsync(_mailSettings.Username, _mailSettings.Password);
+        await client.SendAsync(emailMessage);
+        await client.DisconnectAsync(true);
+    }
+}
 
 public class OrdersRepository : DbContext
 {
@@ -109,7 +165,8 @@ public class Order
     public string ProblemType { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.WaitingForExecution;
     public string ClientName { get; set; }
-    public string ClientSurname { get; set; }    
+    public string ClientSurname { get; set; }
+    public string ClientEmail { get; set; }
     public string? Description { get; set; }
     private string? _executor;
     public string? Executor
@@ -123,19 +180,22 @@ public class Order
         }
     }
 
-    public Order(string device, string problemType, string clientName, string clientSurname)
+    public Order(string device, string problemType, string clientName, string clientSurname, string clientEmail)
     {
         this.Device = device;
         this.ProblemType = problemType;
         this.ClientName = clientName;
         this.ClientSurname = clientSurname;
+        this.ClientEmail = clientEmail;
     }
 
-    public int EndRepair()
+    public int EndRepair(IMailService mailService)
     {
         this.Status = OrderStatus.ReadyToIssue;
         DateOnly ReadyToIssueDate = DateOnly.FromDateTime(DateTime.Now);
         int DaysOfRepair = ReadyToIssueDate.DayNumber - Orderdate.DayNumber;
+        mailService.SendEmailAsync(this.ClientEmail, "Заявка выполнена", $"Ваш ремонт завершен! Заявка №{this.OrderNumber}. Время ремонта составило {DaysOfRepair} дней.");
+
         return DaysOfRepair;
     }
 }
