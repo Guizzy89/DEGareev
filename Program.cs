@@ -69,6 +69,12 @@ app.MapPut("/orders/{orderNumber}/readytoissue", async (int orderNumber, IMailSe
     return Results.Ok(order);
 });
 
+app.MapPost("/orders/search", async ([FromBody] SearchCriteria searchCriteria) =>
+{
+    var results = await repository.Search(searchCriteria);
+    return Results.Ok(results);
+});
+
 app.Run();
 
 public class MailSettings
@@ -112,12 +118,12 @@ public class MailService : IMailService
 public class OrdersRepository : DbContext
 {
     private DbSet<Order> Orders { get; set; }
-    public OrdersRepository ()
+    public OrdersRepository()
     {
         Orders = Set<Order>();
         Database.EnsureCreated();
     }
-    
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseSqlite("Data source = orders.db");
@@ -128,7 +134,7 @@ public class OrdersRepository : DbContext
         try
         {
             Orders.Add(order);
-            await SaveChangesAsync(); 
+            await SaveChangesAsync();
         }
         catch (DbUpdateException ex)
         {
@@ -145,7 +151,7 @@ public class OrdersRepository : DbContext
     public async Task<Order> ReadNumber(int orderNumber)
     {
         var order = await Orders.FirstOrDefaultAsync(order => order.OrderNumber == orderNumber);
-        if (order == null) throw new ArgumentException($"Order with number {orderNumber} not found.");      
+        if (order == null) throw new ArgumentException($"Order with number {orderNumber} not found.");
 
         return order;
     }
@@ -155,6 +161,33 @@ public class OrdersRepository : DbContext
         var order = await ReadNumber(orderNumber);
         Orders.Remove(order);
         await SaveChangesAsync();
+    }
+
+    public async Task<List<Order>> Search(SearchCriteria criteria)
+    {
+        IQueryable<Order> query = Orders.AsQueryable();
+
+        if (criteria.OrderNumber.HasValue)
+        {
+            query = query.Where(o => o.OrderNumber == criteria.OrderNumber.Value);
+        }
+
+        if (!string.IsNullOrEmpty(criteria.Device))
+        {
+            query = query.Where(o => o.Device.Contains(criteria.Device));
+        }
+
+        if (!string.IsNullOrEmpty(criteria.ProblemType))
+        {
+            query = query.Where(o => o.ProblemType.Contains(criteria.ProblemType));
+        }
+
+        if (criteria.Status.HasValue)
+        {
+            query = query.Where(o => o.Status == criteria.Status.Value);
+        }
+
+        return await query.ToListAsync();
     }
     #endregion
 }
@@ -210,4 +243,12 @@ public enum OrderStatus
     WaitingForExecution,
     InRepair,
     ReadyToIssue
+}
+
+public class SearchCriteria
+{
+    public int? OrderNumber { get; set; }
+    public string Device { get; set; }
+    public string ProblemType { get; set; }
+    public OrderStatus? Status { get; set; }
 }

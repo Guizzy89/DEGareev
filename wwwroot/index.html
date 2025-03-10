@@ -10,8 +10,68 @@
 <body>
     <div>
         <a href="/orders/add"><button>Новый заказ</button></a>
+        <button id="searchButton">Поиск заказов</button>
+    </div>
+    <div id="searchForm" style="display: none;">
+        <label for="orderNumber">Номер заказа:</label>
+        <input type="number" id="orderNumber" name="orderNumber" placeholder="Введите номер заказа" />
+
+        <label for="device">Название устройства:</label>
+        <input type="text" id="device" name="device" placeholder="Введите название устройства" />
+
+        <label for="problemType">Тип проблемы:</label>
+        <input type="text" id="problemType" name="problemType" placeholder="Введите тип проблемы" />
+
+        <label for="status">Статус заказа:</label>
+        <select id="status" name="status">
+            <option value="">Все статусы</option>
+            <option value="WaitingForExecution">Ожидает выполнения</option>
+            <option value="InRepair">В ремонте</option>
+            <option value="ReadyToIssue">Готов к выдаче</option>
+        </select>
+        <br>
+
+        <button id="searchSubmitButton">Найти</button>
     </div>
 </body>
+
+<script>
+    document.getElementById("searchButton").addEventListener("click", function () {
+        var form = document.getElementById("searchForm");
+        if (form.style.display === "none") {
+            form.style.display = "block";
+        } else {
+            form.style.display = "none";
+        }
+    });
+
+    document.getElementById("searchSubmitButton").addEventListener("click", async function () {
+        var orderNumber = document.getElementById("orderNumber").value;
+        var device = document.getElementById("device").value;
+        var problemType = document.getElementById("problemType").value;
+        var status = document.getElementById("status").value;
+
+        try {
+            const response = await fetch("http://localhost:5144/orders/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ orderNumber, device, problemType, status })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка отправки данных: ${response.status}`);
+            }
+
+            var data = await response.json();
+            console.log(data);
+        } catch (error) {
+            console.error('Произошла ошибка:', error);
+        }
+    });
+</script>
+
 <style>
     * {
         padding: 10px;
@@ -22,6 +82,8 @@
         height: 100vh;
         display: flex;
         justify-content: center;
+        align-items: center;
+        /* Центруем вертикально */
         background-color: #3aafa9;
     }
 
@@ -29,64 +91,60 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        width: 200px;
+        width: 300px;
+        /* Увеличим ширину для удобства */
     }
 
-    input {
-        display: flex;
-        justify-content: center;
-        color: black;
-        /* Черный текст по умолчанию */
-        border: 1px solid #2b7a77;
-        /* Рамка синего цвета */
-        border-radius: 5px;
-        /* Скругленные углы */
+    label {
+        display: block;
+        /* Делаем метки блочными */
+        margin-bottom: 5px;
+        /* Немного пространства снизу */
+    }
+
+    input,
+    select {
+        display: block;
+        width: 100%;
+        /* Заполняют всю ширину родительского контейнера */
         padding: 10px;
-        /* Внутренние отступы */
+        border: 1px solid #2b7a77;
+        border-radius: 5px;
+        font-size: 16px;
         outline: none;
-        /* Убираем стандартный контур при фокусе */
         transition: all 0.3s ease;
-        /* Плавные переходы */
     }
 
-    /* Стиль при наведении курсора */
-    input:hover {
+    input:hover,
+    select:hover {
         background-color: #def2f1;
-        /* Фон становится синим при наведении */
         color: black;
-        /* Текст становится белым */
     }
 
-    /* Стиль при активном вводе текста (в фокусе) */
-    input:focus {
+    input:focus,
+    select:focus {
         background-color: #def2f1;
-        /* Фон становится синим при фокусе */
         color: black;
-        /* Текст становится белым */
     }
 
     button {
         background-color: #17242a;
-        /* Цвет фона */
         color: white;
-        /* Белый текст */
         border: none;
-        /* Убираем рамку */
-        width: 185px;
-        border-radius: 5px;
-        /* Скругляем углы */
+        width: 150px;
+        /* Подгоняем ширину кнопки */
+        margin-top: 15px;
+        /* Отступ сверху для визуального разделения */
         padding: 10px 20px;
-        /* Внутренний отступ */
+        border-radius: 5px;
         font-family: Arial, sans-serif;
         font-size: 16px;
         transition: background-color 0.3s ease;
-        /* Плавная анимация при наведении */
+        cursor: pointer;
     }
 
     button:hover {
         background-color: #2b7a77;
-        /* цвет при наведении */
-        cursor: pointer;
     }
 </style>
 
