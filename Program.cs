@@ -74,7 +74,35 @@ app.MapPost("/orders/search", async ([FromBody] SearchCriteria searchCriteria) =
     var results = await repository.Search(searchCriteria);
     return Results.Ok(results);
 });
+app.MapPost("/orders/search/order-number", async ([FromBody] SearchCriteria criteria) =>
+{
+    var results = await repository.Search(criteria);
+    return Results.Ok(results);
+});
 
+app.MapPost("/orders/search/device-name", async ([FromBody] SearchCriteria criteria) =>
+{
+    var results = await repository.Search(criteria);
+    return Results.Ok(results);
+});
+
+app.MapPost("/orders/search/problem-type", async ([FromBody] SearchCriteria criteria) =>
+{
+    var results = await repository.Search(criteria);
+    return Results.Ok(results);
+});
+
+app.MapPost("/orders/search/status", async ([FromBody] SearchCriteria criteria) =>
+{
+    // Преобразуем текстовое значение статуса в значение enum
+    if (!string.IsNullOrEmpty(criteria.StatusText))
+    {
+        criteria.Status = OrdersRepository.ParseStatus(criteria.StatusText);
+    }
+
+    var results = await repository.Search(criteria);
+    return Results.Ok(results);
+});
 app.Run();
 
 public class MailSettings
@@ -189,6 +217,24 @@ public class OrdersRepository : DbContext
 
         return await query.ToListAsync();
     }
+        
+    public static OrderStatus ParseStatus(string statusText)
+    {
+        switch (statusText.Trim()) 
+        {
+            case "Ожидает выполнения":
+            case "WaitingForExecution":
+                return OrderStatus.WaitingForExecution;
+            case "В ремонте":
+            case "InRepair":
+                return OrderStatus.InRepair;
+            case "Готов к выдаче":
+            case "ReadyToIssue":
+                return OrderStatus.ReadyToIssue;
+            default:
+                throw new ArgumentException($"Неизвестный статус: {statusText}");
+        }
+    }
     #endregion
 }
 
@@ -250,5 +296,6 @@ public class SearchCriteria
     public int? OrderNumber { get; set; }
     public string Device { get; set; }
     public string ProblemType { get; set; }
-    public OrderStatus? Status { get; set; }
+    public string StatusText { get; set; }
+    public OrderStatus? Status { get; set; } 
 }

@@ -1,151 +1,316 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome!</title>
+    <title>Заказ | Поиск</title>
 </head>
 
 <body>
-    <div>
-        <a href="/orders/add"><button>Новый заказ</button></a>
-        <button id="searchButton">Поиск заказов</button>
+    <!-- Основной блок -->
+    <div class="main-container">
+        <!-- Кнопка "Новый заказ" -->
+        <a href="/orders/add">
+            <button class="btn">Добавить новый заказ</button>
+        </a>
+
+        <!-- Блок кнопок для выбора типа поиска -->
+        <div id="searchButtons">
+            <button id="searchOrderNumberButton" class="btn">Поиск по номеру заказа</button>
+            <button id="searchDeviceButton" class="btn">Поиск по названию устройства</button>
+            <button id="searchProblemTypeButton" class="btn">Поиск по типу проблемы</button>
+            <button id="searchStatusButton" class="btn">Поиск по статусу заказа</button>
+        </div>
+
+        <!-- Форма для поиска по номеру заказа -->
+        <div id="searchOrderNumberForm" style="display: none;">
+            <label for="orderNumberSearch">Номер заказа:</label>
+            <input type="number" id="orderNumberSearch" name="orderNumberSearch" placeholder="Введите номер заказа" />
+            <button id="searchOrderNumberSubmitButton" class="btn">Найти</button>
+        </div>
+
+        <!-- Форма для поиска по названию устройства -->
+        <div id="searchDeviceForm" style="display: none;">
+            <label for="deviceSearch">Название устройства:</label>
+            <input type="text" id="deviceSearch" name="deviceSearch" placeholder="Введите название устройства" />
+            <button id="searchDeviceSubmitButton" class="btn">Найти</button>
+        </div>
+
+        <!-- Форма для поиска по типу проблемы -->
+        <div id="searchProblemTypeForm" style="display: none;">
+            <label for="problemTypeSearch">Тип проблемы:</label>
+            <input type="text" id="problemTypeSearch" name="problemTypeSearch" placeholder="Введите тип проблемы" />
+            <button id="searchProblemTypeSubmitButton" class="btn">Найти</button>
+        </div>
+
+        <!-- Форма для поиска по статусу -->
+        <div id="searchStatusForm" style="display: none;">
+            <label for="statusSearch">Статус заказа:</label>
+            <select id="statusSearch" name="statusSearch">
+                <option value="">Все статусы</option>
+                <option value="WaitingForExecution">Ожидает выполнения</option>
+                <option value="InRepair">В ремонте</option>
+                <option value="ReadyToIssue">Готов к выдаче</option>
+            </select>
+            <button id="searchStatusSubmitButton" class="btn">Найти</button>
+        </div>
+
+        <!-- Контейнер для вывода результатов поиска -->
+        <div id="resultsContainer" style="display: none;">
+            <h2>Результаты поиска</h2>
+            <div id="resultsList"></div>
+        </div>
     </div>
-    <div id="searchForm" style="display: none;">
-        <label for="orderNumber">Номер заказа:</label>
-        <input type="number" id="orderNumber" name="orderNumber" placeholder="Введите номер заказа" />
 
-        <label for="device">Название устройства:</label>
-        <input type="text" id="device" name="device" placeholder="Введите название устройства" />
-
-        <label for="problemType">Тип проблемы:</label>
-        <input type="text" id="problemType" name="problemType" placeholder="Введите тип проблемы" />
-
-        <label for="status">Статус заказа:</label>
-        <select id="status" name="status">
-            <option value="">Все статусы</option>
-            <option value="WaitingForExecution">Ожидает выполнения</option>
-            <option value="InRepair">В ремонте</option>
-            <option value="ReadyToIssue">Готов к выдаче</option>
-        </select>
-        <br>
-
-        <button id="searchSubmitButton">Найти</button>
-    </div>
-</body>
-
-<script>
-    document.getElementById("searchButton").addEventListener("click", function () {
-        var form = document.getElementById("searchForm");
-        if (form.style.display === "none") {
-            form.style.display = "block";
-        } else {
-            form.style.display = "none";
+    <!-- Скрипты -->
+    <script>
+        // Функции для управления отображением форм
+        function hideAllForms() {
+            document.getElementById("searchOrderNumberForm").style.display = "none";
+            document.getElementById("searchDeviceForm").style.display = "none";
+            document.getElementById("searchProblemTypeForm").style.display = "none";
+            document.getElementById("searchStatusForm").style.display = "none";
         }
-    });
 
-    document.getElementById("searchSubmitButton").addEventListener("click", async function () {
-        var orderNumber = document.getElementById("orderNumber").value;
-        var device = document.getElementById("device").value;
-        var problemType = document.getElementById("problemType").value;
-        var status = document.getElementById("status").value;
+        function showForm(formId) {
+            hideAllForms();
+            document.getElementById(formId).style.display = "block";
+        }
 
-        try {
-            const response = await fetch("http://localhost:5144/orders/search", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ orderNumber, device, problemType, status })
-            });
+        // Обработчики для кнопок поиска
+        document.getElementById("searchOrderNumberButton").addEventListener("click", function () {
+            showForm("searchOrderNumberForm");
+        });
 
-            if (!response.ok) {
-                throw new Error(`Ошибка отправки данных: ${response.status}`);
+        document.getElementById("searchDeviceButton").addEventListener("click", function () {
+            showForm("searchDeviceForm");
+        });
+
+        document.getElementById("searchProblemTypeButton").addEventListener("click", function () {
+            showForm("searchProblemTypeForm");
+        });
+
+        document.getElementById("searchStatusButton").addEventListener("click", function () {
+            showForm("searchStatusForm");
+        });
+
+        // Обработчики для кнопок "Найти"
+        document.getElementById("searchOrderNumberSubmitButton").addEventListener("click", async function () {
+            let orderNumber = document.getElementById("orderNumberSearch").value;
+            try {
+                const response = await fetch("/orders/search/order-number", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderNumber })
+                });
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Очищаем предыдущий контент в контейнере результатов
+                let resultsList = document.getElementById("resultsList");
+                resultsList.innerHTML = "";
+
+                // Создаем новый список и добавляем его в контейнер результатов
+                let ul = document.createElement('ul');
+                resultsList.appendChild(ul);
+
+                // Проходим по каждому заказу в полученном массиве и создаем li-элемент
+                data.forEach(order => {
+                    let li = document.createElement('li');
+                    li.textContent = `${order.orderNumber}: ${order.orderdate},${order.clientName}, ${order.clientSurname}, ${order.device}, ${order.problemType}, ${order.clientEmail}`;
+                    ul.appendChild(li);
+                });
+
+                // Показываем контейнер с результатами
+                document.getElementById("resultsContainer").style.display = "block";
+            } catch (err) {
+                console.error(err);
             }
+        });
 
-            var data = await response.json();
-            console.log(data);
-        } catch (error) {
-            console.error('Произошла ошибка:', error);
+        document.getElementById("searchDeviceSubmitButton").addEventListener("click", async function () {
+            let deviceName = document.getElementById("deviceSearch").value;
+            try {
+                const response = await fetch("/orders/search/device-name", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ Device: deviceName })
+                });
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Очищаем предыдущий контент в контейнере результатов
+                let resultsList = document.getElementById("resultsList");
+                resultsList.innerHTML = "";
+
+                // Создаем новый список и добавляем его в контейнер результатов
+                let ul = document.createElement('ul');
+                resultsList.appendChild(ul);
+
+                // Проходим по каждому заказу в полученном массиве и создаем li-элемент
+                data.forEach(order => {
+                    let li = document.createElement('li');
+                    li.textContent = `${order.orderNumber}: ${order.orderdate},${order.clientName}, ${order.clientSurname}, ${order.device}, ${order.problemType}, ${order.clientEmail}`;
+                    ul.appendChild(li);
+                });
+
+                // Показываем контейнер с результатами
+                document.getElementById("resultsContainer").style.display = "block";
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        document.getElementById("searchProblemTypeSubmitButton").addEventListener("click", async function () {
+            let problemType = document.getElementById("problemTypeSearch").value;
+            try {
+                const response = await fetch("/orders/search/problem-type", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ problemType })
+                });
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Очищаем предыдущий контент в контейнере результатов
+                let resultsList = document.getElementById("resultsList");
+                resultsList.innerHTML = "";
+
+                // Создаем новый список и добавляем его в контейнер результатов
+                let ul = document.createElement('ul');
+                resultsList.appendChild(ul);
+
+                // Проходим по каждому заказу в полученном массиве и создаем li-элемент
+                data.forEach(order => {
+                    let li = document.createElement('li');
+                    li.textContent = `${order.orderNumber}: ${order.orderdate},${order.clientName}, ${order.clientSurname}, ${order.device}, ${order.problemType}, ${order.clientEmail}`;
+                    ul.appendChild(li);
+                });
+
+                // Показываем контейнер с результатами
+                document.getElementById("resultsContainer").style.display = "block";
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        document.getElementById("searchStatusSubmitButton").addEventListener("click", async function () {
+            let status = document.getElementById("statusSearch").value;
+            try {
+                const response = await fetch("/orders/search/status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status })
+                });
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Очищаем предыдущий контент в контейнере результатов
+                let resultsList = document.getElementById("resultsList");
+                resultsList.innerHTML = "";
+
+                // Создаем новый список и добавляем его в контейнер результатов
+                let ul = document.createElement('ul');
+                resultsList.appendChild(ul);
+
+                // Проходим по каждому заказу в полученном массиве и создаем li-элемент
+                data.forEach(order => {
+                    let li = document.createElement('li');
+                    li.textContent = `${order.orderNumber}: ${order.orderdate},${order.clientName}, ${order.clientSurname}, ${order.device}, ${order.problemType}, ${order.clientEmail}`;
+                    ul.appendChild(li);
+                });
+
+                // Показываем контейнер с результатами
+                document.getElementById("resultsContainer").style.display = "block";
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+
+    <style>
+        * {
+            padding: 10px;
+            margin: 10px;
         }
-    });
-</script>
 
-<style>
-    * {
-        padding: 10px;
-        margin: 10px;
-    }
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Центруем вертикально */
+            background-color: #3aafa9;
+        }
 
-    body {
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        /* Центруем вертикально */
-        background-color: #3aafa9;
-    }
+        .OrdersAddForm {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+            /* Увеличим ширину для удобства */
+        }
 
-    .OrdersAddForm {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: 300px;
-        /* Увеличим ширину для удобства */
-    }
+        label {
+            display: block;
+            /* Делаем метки блочными */
+            margin-bottom: 5px;
+            /* Немного пространства снизу */
+        }
 
-    label {
-        display: block;
-        /* Делаем метки блочными */
-        margin-bottom: 5px;
-        /* Немного пространства снизу */
-    }
+        input,
+        select {
+            display: block;
+            width: 100%;
+            /* Заполняют всю ширину родительского контейнера */
+            padding: 10px;
+            border: 1px solid #2b7a77;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
 
-    input,
-    select {
-        display: block;
-        width: 100%;
-        /* Заполняют всю ширину родительского контейнера */
-        padding: 10px;
-        border: 1px solid #2b7a77;
-        border-radius: 5px;
-        font-size: 16px;
-        outline: none;
-        transition: all 0.3s ease;
-    }
+        input:hover,
+        select:hover {
+            background-color: #def2f1;
+            color: black;
+        }
 
-    input:hover,
-    select:hover {
-        background-color: #def2f1;
-        color: black;
-    }
+        input:focus,
+        select:focus {
+            background-color: #def2f1;
+            color: black;
+        }
 
-    input:focus,
-    select:focus {
-        background-color: #def2f1;
-        color: black;
-    }
+        button {
+            background-color: #17242a;
+            color: white;
+            border: none;
+            width: 200px;
+            /* Подгоняем ширину кнопки */
+            margin-top: 15px;
+            /* Отступ сверху для визуального разделения */
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
 
-    button {
-        background-color: #17242a;
-        color: white;
-        border: none;
-        width: 150px;
-        /* Подгоняем ширину кнопки */
-        margin-top: 15px;
-        /* Отступ сверху для визуального разделения */
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-family: Arial, sans-serif;
-        font-size: 16px;
-        transition: background-color 0.3s ease;
-        cursor: pointer;
-    }
-
-    button:hover {
-        background-color: #2b7a77;
-    }
-</style>
+        button:hover {
+            background-color: #2b7a77;
+        }
+    </style>
 
 </html>
