@@ -13,6 +13,7 @@
         <input id="clientSurname" placeholder="Client Surname" />
         <input id="device" placeholder="Device" />
         <input id="problemType" placeholder="Problem Type" />
+        <input id="clientEmail" placeholder="СlientEmail" />
         <button onclick="OrdersAdd()">Новый заказ</button>
     </div>
 
@@ -22,6 +23,7 @@
             let clientSurname = document.getElementById("clientSurname").value;
             let device = document.getElementById("device").value;
             let problemType = document.getElementById("problemType").value;
+            let clientEmail = document.getElementById("clientEmail").value;
 
             try {
                 const response = await fetch("http://localhost:5144/orders/add", {
@@ -33,7 +35,8 @@
                         clientName: clientName,
                         clientSurname: clientSurname,
                         device: device,
-                        problemType: problemType
+                        problemType: problemType,
+                        clientEmail: clientEmail
                     })
                 });
 

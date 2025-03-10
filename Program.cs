@@ -36,6 +36,11 @@ app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
     }
 });
 
+app.MapGet("/orders/add", () => Results.Content(
+    File.ReadAllText(Path.Combine(app.Environment.WebRootPath, "ordersadd.html")),
+    "text/html")
+);
+app.MapGet("/orders/add-form", () => Results.Content(File.ReadAllText("ordersadd.html"), "text/html"));
 app.MapPost("/orders/add", async ([FromBody] Order order) =>
 {
     await repository.Add(order);
