@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using MailKit.Net.Smtp;
 using MimeKit;
 using Microsoft.Extensions.Options;
-
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -30,13 +29,11 @@ app.MapPost("/orders/add", async ([FromBody] Order order) =>
     await repository.Add(order);
     return Results.Created($"/orders/{order.OrderNumber}", order);
 });
-
 app.MapDelete("/orders/{orderNumber:int}", async (int orderNumber) =>
 {
     await repository.Delete(orderNumber);
     return Results.NoContent();
 });
-
 app.MapPut("/orders/{orderNumber}/description", async (int orderNumber, [FromBody] string description) =>
 {
     var order = await repository.ReadNumber(orderNumber);
@@ -44,7 +41,6 @@ app.MapPut("/orders/{orderNumber}/description", async (int orderNumber, [FromBod
     await repository.SaveChangesAsync();
     return Results.Ok(order);
 });
-
 app.MapPut("/orders/{orderNumber}/readytoissue", async (int orderNumber, IMailService mailService) =>
 {
     var order = await repository.ReadNumber(orderNumber);
@@ -52,7 +48,6 @@ app.MapPut("/orders/{orderNumber}/readytoissue", async (int orderNumber, IMailSe
     await repository.SaveChangesAsync();
     return Results.Ok(order);
 });
-
 app.MapPost("/orders/search", async ([FromBody] SearchCriteria searchCriteria) =>
 {
     var results = await repository.Search(searchCriteria);
@@ -63,19 +58,16 @@ app.MapPost("/orders/search/order-number", async ([FromBody] SearchCriteria crit
     var results = await repository.Search(criteria);
     return Results.Ok(results);
 });
-
 app.MapPost("/orders/search/device-name", async ([FromBody] SearchCriteria criteria) =>
 {
     var results = await repository.Search(criteria);
     return Results.Ok(results);
 });
-
 app.MapPost("/orders/search/problem-type", async ([FromBody] SearchCriteria criteria) =>
 {
     var results = await repository.Search(criteria);
     return Results.Ok(results);
 });
-
 app.MapPost("/orders/search/status", async ([FromBody] SearchCriteria criteria) =>
 {
     if (!string.IsNullOrEmpty(criteria.StatusText))
@@ -87,7 +79,6 @@ app.MapPost("/orders/search/status", async ([FromBody] SearchCriteria criteria) 
     return Results.Ok(results);
 });
 app.Run();
-
 public class MailSettings
 {
     public string Host { get; set; }
@@ -95,12 +86,10 @@ public class MailSettings
     public string Username { get; set; }
     public string Password { get; set; }
 }
-
 public interface IMailService
 {
     Task SendEmailAsync(string to, string subject, string message);
 }
-
 public class MailService : IMailService
 {
     private readonly MailSettings _mailSettings;
@@ -109,7 +98,6 @@ public class MailService : IMailService
     {
         _mailSettings = mailSettings.Value;
     }
-
     public async Task SendEmailAsync(string to, string subject, string message)
     {
         var emailMessage = new MimeMessage();
@@ -125,7 +113,6 @@ public class MailService : IMailService
         await client.DisconnectAsync(true);
     }
 }
-
 public class OrdersRepository : DbContext
 {
     private DbSet<Order> Orders { get; set; }
@@ -134,7 +121,6 @@ public class OrdersRepository : DbContext
         Orders = Set<Order>();
         Database.EnsureCreated();
     }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseSqlite("Data source = orders.db");
@@ -153,12 +139,10 @@ public class OrdersRepository : DbContext
             throw;
         }
     }
-
     public async Task<List<Order>> ReadAll()
     {
         return await Orders.ToListAsync();
     }
-
     public async Task<Order> ReadNumber(int orderNumber)
     {
         var order = await Orders.FirstOrDefaultAsync(order => order.OrderNumber == orderNumber);
@@ -166,14 +150,12 @@ public class OrdersRepository : DbContext
 
         return order;
     }
-
     public async Task Delete(int orderNumber)
     {
         var order = await ReadNumber(orderNumber);
         Orders.Remove(order);
         await SaveChangesAsync();
     }
-
     public async Task<List<Order>> Search(SearchCriteria criteria)
     {
         IQueryable<Order> query = Orders.AsQueryable();
@@ -199,8 +181,7 @@ public class OrdersRepository : DbContext
         }
 
         return await query.ToListAsync();
-    }
-        
+    }        
     public static OrderStatus ParseStatus(string statusText)
     {
         switch (statusText.Trim()) 
@@ -220,7 +201,6 @@ public class OrdersRepository : DbContext
     }
     #endregion
 }
-
 public class Order
 {
     [Key]
@@ -246,7 +226,6 @@ public class Order
                 Status = OrderStatus.InRepair;
         }
     }
-
     public Order(string device, string problemType, string clientName, string clientSurname, string clientEmail)
     {
         this.Device = device;
@@ -255,7 +234,6 @@ public class Order
         this.ClientSurname = clientSurname;
         this.ClientEmail = clientEmail;
     }
-
     public int EndRepair(IMailService mailService)
     {
         this.Status = OrderStatus.ReadyToIssue;
@@ -266,14 +244,12 @@ public class Order
         return DaysOfRepair;
     }
 }
-
 public enum OrderStatus
 {
     WaitingForExecution,
     InRepair,
     ReadyToIssue
 }
-
 public class SearchCriteria
 {
     public int? OrderNumber { get; set; }
