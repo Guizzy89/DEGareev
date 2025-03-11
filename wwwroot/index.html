@@ -23,6 +23,18 @@
             <button id="searchStatusButton" class="btn">Поиск по статусу заказа</button>
         </div>
 
+        <div> <button id="addExecutorButton">Добавить исполнителя к заказу</button> </div>
+
+        <div id="addExecutorForm" style="display: none;">
+            <form id="assignExecutorForm">
+                <label for="orderNumberInput">Номер заказа:</label><br>
+                <input type="number" id="orderNumberInput" name="orderNumber" required><br>
+                <label for="executorSelect">Исполнитель:</label><br>
+                <select id="executorSelect" name="executor" required></select><br>
+                <button type="submit">Назначить исполнителя</button>
+            </form>
+        </div>
+
         <!-- Форма для поиска по номеру заказа -->
         <div id="searchOrderNumberForm" style="display: none;">
             <label for="orderNumberSearch">Номер заказа:</label>
@@ -77,6 +89,52 @@
             hideAllForms();
             document.getElementById(formId).style.display = "block";
         }
+        document.getElementById('addExecutorButton').addEventListener('click', function () {
+            document.getElementById('addExecutorForm').style.display = 'block';
+
+            // Загрузка списка исполнителей
+            fetch('/executors')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('executorSelect');
+                    data.forEach(executor => {
+                        const option = document.createElement('option');
+                        option.value = executor;
+                        option.textContent = executor;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching executors:', error));
+        });
+
+        document.getElementById('assignExecutorForm').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Предотвращаем стандартное поведение отправки формы
+
+            const formData = new FormData(event.target); // Собираем данные из формы
+            const orderNumber = formData.get('orderNumber'); // Номер заказа
+            const executor = formData.get('executor'); // Исполнитель
+
+            try {
+                const response = await fetch(`/orders/${orderNumber}/assign-executor`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ executor }) // Передаем исполнителя в теле запроса
+                });
+
+                if (response.ok) {
+                    alert('Исполнитель назначен успешно!');
+                    window.location.href = '/'; // Переходим на главную страницу после успешного назначения
+                } else {
+                    const errorResponse = await response.json();
+                    alert(`Ошибка при назначении исполнителя: ${errorResponse.message}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при отправке запроса:', error);
+                alert('Произошла ошибка при назначении исполнителя.');
+            }
+        });
 
         // Обработчики для кнопок поиска
         document.getElementById("searchOrderNumberButton").addEventListener("click", function () {
