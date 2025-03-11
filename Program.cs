@@ -78,6 +78,27 @@ app.MapPost("/orders/search/status", async ([FromBody] SearchCriteria criteria) 
     var results = await repository.Search(criteria);
     return Results.Ok(results);
 });
+app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
+{
+    try
+    {
+        var order = await Task.FromResult(repository.ReadNumber(orderNumber));
+        return Results.Ok(order);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.NotFound(ex.Message);
+    }
+});
+app.MapPut("/orders/{orderNumber}/assign-executor", async (int orderNumber, [FromBody] string executor) =>
+{
+    var order = await repository.ReadNumber(orderNumber);
+    order.AssignExecutor(executor);  
+
+    await repository.SaveChangesAsync();  
+
+    return Results.Ok(order);  
+});
 app.Run();
 public class MailSettings
 {
@@ -215,17 +236,8 @@ public class Order
     public string ClientSurname { get; set; }
     public string ClientEmail { get; set; }
     public string? Description { get; set; }
-    private string? _executor;
-    public string? Executor
-    {
-        get => _executor;
-        set
-        {
-            _executor = value;
-            if (_executor != null)
-                Status = OrderStatus.InRepair;
-        }
-    }
+    public string? Executor { get; set; }
+    
     public Order(string device, string problemType, string clientName, string clientSurname, string clientEmail)
     {
         this.Device = device;
@@ -242,6 +254,11 @@ public class Order
         mailService.SendEmailAsync(this.ClientEmail, "Заявка выполнена", $"Ваш ремонт завершен! Заявка №{this.OrderNumber}. Время ремонта составило {DaysOfRepair} дней.");
 
         return DaysOfRepair;
+    }
+    public void AssignExecutor(string executor)
+    {
+        this.Executor = executor;
+        this.Status = OrderStatus.InRepair;
     }
 }
 public enum OrderStatus
