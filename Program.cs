@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.Extensions.Configuration;
 using MailKit.Net.Smtp;
 using MimeKit;
-using MailKit;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,22 +18,8 @@ OrdersRepository repository = new OrdersRepository();
 List<string> executors = ["Ivan", "Petr", "Sergey"];
 app.UseStaticFiles();
 app.MapGet("/", () => Results.Redirect("index.html"));
-app.UseCors(option =>
-option.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+app.UseCors(option =>option.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.MapGet("orders", async () => await repository.ReadAll());
-app.MapGet("/orders/{orderNumber:int}", async (int orderNumber) =>
-{
-    try
-    {
-        var order = await Task.FromResult(repository.ReadNumber(orderNumber));
-        return Results.Ok(order);
-    }
-    catch (ArgumentException ex)
-    {
-        return Results.NotFound(ex.Message);
-    }
-});
-
 app.MapGet("/orders/add", () => Results.Content(
     File.ReadAllText(Path.Combine(app.Environment.WebRootPath, "ordersadd.html")),
     "text/html")
@@ -94,7 +78,6 @@ app.MapPost("/orders/search/problem-type", async ([FromBody] SearchCriteria crit
 
 app.MapPost("/orders/search/status", async ([FromBody] SearchCriteria criteria) =>
 {
-    // Преобразуем текстовое значение статуса в значение enum
     if (!string.IsNullOrEmpty(criteria.StatusText))
     {
         criteria.Status = OrdersRepository.ParseStatus(criteria.StatusText);
